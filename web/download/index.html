@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <title>自动下载网页</title>
+</head>
+
+<body>
+    <script>
+        (async function downloadAutomatically() {
+            const url = "https://github.com/Oracynx/UNO/releases/latest"; // ← 替换为你要下载的网页地址
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                const blob = new Blob([text], { type: "text/html" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "downloaded_page.html";
+                link.style.display = "none";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error("下载失败：", error);
+            }
+        })();
+    </script>
+</body>
+
+</html>
