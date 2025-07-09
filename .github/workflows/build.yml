@@ -28,6 +28,18 @@ jobs:
         if: runner.os == 'Linux'
         run: chmod +x build-scripts/build.sh
 
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
       - name: Run Build Script (Windows)
         if: runner.os == 'Windows'
         run: ./build-scripts/build.ps1
@@ -96,3 +108,12 @@ jobs:
           VERSION=$(echo $TAG | sed 's/[^0-9.]*//g')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION=$VERSION" > .env
+
+      - name: Extract version from tag (Windows)
+        if: runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $tag = "$env:GITHUB_REF".Split('/')[-1]
+          $version = $tag -replace '[^0-9.]', ''
+          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "VERSION=$version" | Out-File -FilePath .env -Encoding utf8
