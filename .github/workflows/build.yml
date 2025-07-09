@@ -87,3 +87,12 @@ jobs:
             dist/CanYanTool-Linux/CanYanTool-linux
           # 当 PRERELEASE=true 时，该 release 会被标记为 pre-release
           prerelease: ${{ env.PRERELEASE }}
+
+      - name: Extract version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          TAG=${GITHUB_REF##*/}
+          VERSION=$(echo $TAG | sed 's/[^0-9.]*//g')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" > .env
