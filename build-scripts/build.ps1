@@ -1,0 +1,1 @@
+pyinstaller src\client.py -F

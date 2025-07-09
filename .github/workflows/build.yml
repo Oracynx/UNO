@@ -1,0 +1,89 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13.3"
+
+      - name: Create Virtual Environment
+        run: python -m venv .venv
+
+      - name: Grant execution permission (Linux only)
+        if: runner.os == 'Linux'
+        run: chmod +x build-scripts/build.sh
+
+      - name: Run Build Script (Windows)
+        if: runner.os == 'Windows'
+        run: ./build-scripts/build.ps1
+
+      - name: Run Build Script (Linux)
+        if: runner.os == 'Linux'
+        run: ./build-scripts/build.sh
+
+      - name: Rename Output Files
+        if: runner.os == 'Windows'
+        run: mv dist/CaiYanTool.exe dist/CanYanTool-win.exe
+
+      - name: Rename Output Files (Linux)
+        if: runner.os == 'Linux'
+        run: mv dist/CaiYanTool dist/CanYanTool-linux
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CanYanTool-${{ runner.os }}
+          path: dist/CanYanTool-*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout Repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: Determine Pre-release
+        run: |
+          # 确保本地有 develop 与 master 分支信息
+          git fetch origin master develop
+          # 如果该 tag 所指向的提交在 develop 分支上，则标记为预发布
+          if git branch -r --contains $GITHUB_SHA | grep -q 'origin/develop'
+          then
+            echo "PRERELEASE=true" >> $GITHUB_ENV
+          else
+            echo "PRERELEASE=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/CanYanTool-Windows/CanYanTool-win.exe
+            dist/CanYanTool-Linux/CanYanTool-linux
+          # 当 PRERELEASE=true 时，该 release 会被标记为 pre-release
+          prerelease: ${{ env.PRERELEASE }}
