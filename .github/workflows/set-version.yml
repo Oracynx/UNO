@@ -1,0 +1,21 @@
+name: Set VERSION from tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  set-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          TAG=${GITHUB_REF##*/}
+          VERSION=$(echo $TAG | sed 's/[^0-9.]*//g')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Show VERSION
+        run: echo "VERSION is $VERSION"

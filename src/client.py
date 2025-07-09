@@ -27,6 +27,11 @@ BAR = r'''  ___        _ _              _   _ _   _  ___
  \___/|_| |_|_|_|_| |_|\___|  \___/|_| \_|\___/
 '''
 
+try:
+    VERSION = os.environ.get('VERSION', CLIENT_VERSION)
+except Exception:
+    VERSION = CLIENT_VERSION
+
 
 def color_card(card):
     if card in ['SK', 'TL']:
